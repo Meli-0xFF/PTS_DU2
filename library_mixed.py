@@ -23,8 +23,8 @@ class MsgCreator:
             RES_USER_NOT_EXISTS: F'Cannot change the reservation as {kwargs.get("new_user")} does not exist.',
             INCL_DATE: F'Reservation {kwargs.get("_id")} includes {kwargs.get("date")}',
             NOT_INCL_DATE: F'Reservation {kwargs.get("_id")} does not include {kwargs.get("date")}',
-            RES_OVERLAP: F'Reservations {kwargs.get("_id")} and {kwargs.get("other_id")} do overlap',
-            RES_NOT_OVERLAP: F'Reservations {kwargs.get("_id")} and {kwargs.get("other_id")} do not overlap',
+            RES_OVERLAP:F'Reservations {kwargs.get("_id")} and {kwargs.get("other")} do overlap',
+            RES_NOT_OVERLAP: F'Reservations {kwargs.get("_id")} and {kwargs.get("other")} do not overlap',
             RES_ID_VALID: F'Reservation {kwargs.get("_id")} is valid {kwargs.get("for_")} of ' +
                         F'{kwargs.get("book")} on {kwargs.get("date")}.',
             RES_CHG_FOR: F'Reservation for {kwargs.get("user")} of {kwargs.get("book")} on {kwargs.get("date")} ' +
@@ -47,10 +47,10 @@ class Logger:
         print(msg_creator.get_msg(issue_number, **kwargs))
 
 class Reservation(object):
-    log = Logger()
     _ids = count(0)
     
     def __init__(self, from_, to, book, for_):
+        self.log = Logger()
         self._id = next(Reservation._ids)
         self._from = from_
         self._to = to    
@@ -64,17 +64,17 @@ class Reservation(object):
                and self._to >= other._from)
 
         if not ret:
-            self.log.write(RES_NOT_OVERLAP, _id = self._id, other_id = other._id)
-        self.log.write(RES_OVERLAP, _id = self._id, other_id = other._id)
+            self.log.write(RES_NOT_OVERLAP, _id = self._id, other = other._id)
+        self.log.write(RES_OVERLAP, _id = self._id, other = other._id)
         return ret
-            
+
     def includes(self, date):
         ret = (self._from <= date <= self._to)
         if not ret:
             self.log.write(NOT_INCL_DATE, _id = self._id, date = date)
         self.log.write(INCL_DATE, _id = self._id, date = date)
         return ret        
-        
+
     def identify(self, date, book, for_):
         if book != self._book:
             self.log.write(ID_WRONG_BOOK, _id = self._id, _book = self._book, book = book)
@@ -88,16 +88,16 @@ class Reservation(object):
 
         self.log.write(RES_ID_VALID, _id = self._id, for_ = for_, book = book, date = date)
         return True
-        
+
     def change_for(self, for_):
         self.log.write(RES_CHG_FOR, _id = self._id, _for = self._for, for_ = for_)
         self._for = for_
         
 
 class Library(object):
-    log = Logger()
 
     def __init__(self):
+        self.log = Logger()
         self._users = set()
         self._books = {}   #maps name to count
         self._reservations = [] #Reservations sorted by from
